@@ -1,7 +1,8 @@
 package com.example.presentationLayer;
 
 import com.example.repositoryLayer.IStudentRepository;
-import com.example.repositoryLayer.StudentRepository;
+import com.example.repositoryLayer.StudentEntity;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,17 +11,22 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 public class StudentsController {
     private String errorMessage = "";
-//    @Autowired
-//    IStudentRepository studentRepository;
-    StudentRepository studentRepository = new StudentRepository();
+    @Autowired
+    IStudentRepository studentRepository;
+    ModelMapper modelMapper = new ModelMapper();
+//    StudentRepository studentRepository = new StudentRepository();
     @GetMapping("/api/v1/students")
     public ResponseEntity<List<StudentDTO>> read() {
-        var studentDTOS= studentRepository.read();
-//        ArrayList<StudentDTO> studentDTOS = new ArrayList<>();
+        var studentEntities= studentRepository.findAll();
+        List<StudentDTO> studentDTOS = studentEntities.stream()
+                .map(s -> modelMapper.map(s,StudentDTO.class))
+                .collect(Collectors.toList());
 //        for(int i=0; i<studentDTOS.size(); i++)
 //        {
 //            var studentDTO = new StudentDTO(studentEntities.get(i).getId(), studentEntities.get(i).getFirstName(), studentEntities.get(i).getLastName(), studentEntities.get(i).getPhone());
@@ -31,13 +37,20 @@ public class StudentsController {
 
     @GetMapping("/api/v1/students/{id}")
     public ResponseEntity<StudentDTO> read(@PathVariable("id") int studentId) {
-        return new ResponseEntity<StudentDTO>(studentRepository.read(studentId), HttpStatus.OK);
+        Optional<StudentEntity> studentDB = studentRepository.findById(studentId);
+        if(studentDB.isEmpty())
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        StudentEntity studentEntity = studentDB.get();
+        var studentDTO = modelMapper.map(studentEntity, StudentDTO.class);
+        return new ResponseEntity<StudentDTO>(studentDTO, HttpStatus.OK);
     }
 
     @PostMapping("/api/v1/students")
     public ResponseEntity create(@RequestBody StudentDTO student) {
         if (isValidated(student)) {
-            var studentAfterCreated = studentRepository.create(student);
+            var studentEntity = modelMapper.map(student, StudentEntity.class);
+            var studentCreated = studentRepository.save(studentEntity);
+            var studentAfterCreated =  modelMapper.map(studentCreated, StudentDTO.class);
             return new ResponseEntity<StudentDTO>(studentAfterCreated, HttpStatus.CREATED);
         } else {
             var validationModel = new ValidationModel("create(student)", "isValidated(student)", errorMessage);
@@ -46,9 +59,18 @@ public class StudentsController {
     }
 
     @PutMapping("/api/v1/students/{id}")
-    public ResponseEntity<?> update(@RequestBody StudentDTO student, @PathVariable("id") int studentId) {
+    public ResponseEntity<?> update(@RequestBody StudentDTO student,
+                                    @PathVariable("id") int studentId) {
         try {
-            studentRepository.update(studentId, student);
+            Optional<StudentEntity> studentDB = studentRepository.findById(studentId);
+            if(studentDB.isEmpty())
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            StudentEntity studentEntity = studentDB.get();
+            studentEntity.setLastName(student.getLastName());
+            studentEntity.setFirstName(student.getFirstName());
+            studentEntity.setPhone(student.getPhone());
+            studentRepository.save(studentEntity);
+
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         catch (Exception exception) {
@@ -63,7 +85,11 @@ public class StudentsController {
 
     @DeleteMapping("/api/v1/students/{id}")
     public ResponseEntity<?> delete(@PathVariable("id") int studentId) {
-        studentRepository.delete(studentId);
+        Optional<StudentEntity> studentDB = studentRepository.findById(studentId);
+        if(studentDB.isEmpty())
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        StudentEntity studentEntity = studentDB.get();
+        studentRepository.delete(studentEntity);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 
@@ -75,8 +101,6 @@ public class StudentsController {
         }
 
         return true;
-
-        //validate "Phone", BTVN3: phone hợp lệ là phone có 10 ký số
 
     }
 }
