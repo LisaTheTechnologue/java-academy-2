@@ -1,5 +1,6 @@
 package com.example.repositoryLayer;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
@@ -13,9 +14,8 @@ public class StudentEntity {
     private String lastName;
     private String phone;
 
-    public StudentEntity(int id, String firstName, String lastName, String phone)
+    public StudentEntity(String firstName, String lastName, String phone)
     {
-        this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.phone = phone;

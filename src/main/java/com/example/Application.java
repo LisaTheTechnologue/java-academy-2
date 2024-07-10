@@ -1,5 +1,6 @@
 package com.example;
 
+import com.example.repositoryLayer.IBaseStudentRepository;
 import com.example.repositoryLayer.IStudentRepository;
 import com.example.repositoryLayer.StudentEntity;
 import org.springframework.boot.CommandLineRunner;
@@ -14,12 +15,12 @@ public class Application {
 	}
 
 	@Bean
-	public CommandLineRunner demo(IStudentRepository studentRepository) {
+	public CommandLineRunner demo(IBaseStudentRepository studentRepository) {
 		return (args) -> {
 			// save few students
-			StudentEntity student1 = new StudentEntity(108, "nguyen", "van a", "0972757056");
-			StudentEntity student2 = new StudentEntity(109, "tran", "thi b", "0465756767");
-			StudentEntity student3 = new StudentEntity(110, "huyn", "c", "078978564");
+			StudentEntity student1 = new StudentEntity("nguyen", "van a", "0972757056");
+			StudentEntity student2 = new StudentEntity("tran", "thi b", "0465756767");
+			StudentEntity student3 = new StudentEntity("huyn", "c", "078978564");
 
 			studentRepository.save(student1);
 			studentRepository.save(student2);
