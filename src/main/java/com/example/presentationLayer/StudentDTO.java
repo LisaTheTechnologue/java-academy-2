@@ -6,6 +6,9 @@ public class StudentDTO {
     private String lastName;
     private String phone;
 
+    public StudentDTO() {
+    }
+
     public StudentDTO(int id, String firstName, String lastName, String phone)
     {
         this.id = id;
